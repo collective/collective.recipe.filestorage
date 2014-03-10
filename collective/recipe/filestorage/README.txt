@@ -67,7 +67,12 @@ zeo-blob-storage
 zeo-shared-blob-dir
     Boolean that should be 'on' if the blob dir is being shared by the ZEO
     server and client. Defaults to 'on'.
-
+replicate-to
+    Interface and port to listen to for ZRS connection
+replicate-from
+    Interface and port to connect to to receive ZRS replication updates
+keep-alive-delay
+    ZRS setting to ensure replication connection is maintained
 
 Example usage
 =============
