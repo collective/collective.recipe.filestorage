@@ -11,7 +11,7 @@ class Recipe(object):
     def __init__(self, buildout, name, options):
         self.buildout, self.name, self.options = buildout, name, options
         active_parts = [p.strip() for p in self.buildout['buildout']['parts'].split()]
-        
+
         # figure out which ZEO we're going to inject filestorage configuration into, if any
         zeo_address = None
         self.zeo_part = options.get('zeo', None)
@@ -25,7 +25,7 @@ class Recipe(object):
                 part = self.buildout[part_name]
                 if not part.has_key('recipe'):
                     continue
-                elif part['recipe'] in ('plone.recipe.zope2zeoserver', 'plone.recipe.zeoserver'):
+                elif 'plone.recipe.zope2zeoserver' in part['recipe'] or 'plone.recipe.zeoserver' in part['recipe']:
                     if self.zeo_part is not None:
                         raise UserError, '[collective.recipe.filestorage] "%s" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.' % name
                     self.zeo_part = part_name
@@ -38,7 +38,7 @@ class Recipe(object):
                 part = self.buildout[part_name]
                 if not part.has_key('recipe'):
                     continue
-                elif part['recipe'] == 'plone.recipe.zope2instance':
+                elif 'plone.recipe.zope2instance' in part['recipe']:
                     if zeo_address is None or zeo_address == part.get('zeo-address', 8100):
                         self.zope_parts.append(part_name)
                 
