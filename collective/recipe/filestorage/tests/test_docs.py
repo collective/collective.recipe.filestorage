@@ -37,14 +37,14 @@ index = http://pypi.python.org/simple
 versions = versions
 [versions]
 # pin to a version that doesn't pull in an eggified Zope
-plone.recipe.zope2instance = 3.6
+# plone.recipe.zope2instance = 3.6
 ''')
 
 
 def test_suite():
     suite = unittest.TestSuite((
             doctest.DocFileSuite(
-                '../README.txt',
+                'doctests.rst',
                 setUp=setUp,
                 tearDown=zc.buildout.testing.buildoutTearDown,
                 optionflags=optionflags,

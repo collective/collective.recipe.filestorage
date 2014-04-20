@@ -14,7 +14,7 @@ long_description = (
     'Detailed Documentation\n'
     '**********************\n'
     + '\n' +
-    read('collective', 'recipe', 'filestorage', 'README.txt')
+    read('README.rst')
     + '\n' +
     'Change history\n'
     '**************\n'
@@ -29,7 +29,7 @@ long_description = (
 entry_point = 'collective.recipe.filestorage:Recipe'
 entry_points = {"zc.buildout": ["default = %s" % entry_point]}
 
-tests_require=['zope.testing']
+tests_require=['zope.testing', 'manuel']
 
 
 setup(name='collective.recipe.filestorage',
@@ -47,8 +47,8 @@ setup(name='collective.recipe.filestorage',
         ],
       keywords='buildout zope zeo zodb mountpoint filestorage',
       author='David Glick',
-      author_email='davidglick@onenw.org',
-      url='http://svn.plone.org/svn/collective/buildout/collective.recipe.filestorage/trunk',
+      author_email='david.glick@plone.org',
+      url='https://github.com/collective/collective.recipe.filestorage',
       license='ZPL',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['collective', 'collective.recipe'],
@@ -60,7 +60,7 @@ setup(name='collective.recipe.filestorage',
                         # -*- Extra requirements: -*-
                         ],
       tests_require=tests_require,
-      extras_require=dict(tests=tests_require),
+      extras_require=dict(test=tests_require),
       test_suite = 'collective.recipe.filestorage.tests.test_docs.test_suite',
       entry_points=entry_points,
       )
