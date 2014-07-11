@@ -251,6 +251,7 @@ This should result in the appropriate additions to ``zeo.conf`` and both ``zope.
      cache-size 5000
      allow-implicit-cross-references false
      <zeoclient>
+       read-only false
        server 8100
        storage my-fs
        name my-fs_zeostorage
@@ -271,6 +272,7 @@ This should result in the appropriate additions to ``zeo.conf`` and both ``zope.
      cache-size 5000
      allow-implicit-cross-references false
      <zeoclient>
+       read-only false
        server 8100
        storage my-fs
        name my-fs_zeostorage
@@ -354,6 +356,7 @@ As above, we can override a number of the default parameters::
      cache-size 1000
      allow-implicit-cross-references false
      <zeoclient>
+       read-only false
        blob-dir /sample-buildout/var/blobstorage-my-fs
        shared-blob-dir on
        server 8101
@@ -375,6 +378,7 @@ As above, we can override a number of the default parameters::
      cache-size 1000
      allow-implicit-cross-references false
      <zeoclient>
+       read-only false
        blob-dir /sample-buildout/var/blobstorage-my-fs
        shared-blob-dir on
        server 8101
