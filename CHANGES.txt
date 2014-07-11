@@ -7,6 +7,13 @@
  - Disallow cross-database references finally (see https://dev.plone.org/ticket/11150)
    [jean]
 
+0.7 (unlreased)
+===============
+
+- Support zrs options replicate-to, replicate-from and keep-alive-delay
+  [ivant, djay]
+
+
 0.6 (2010-08-13)
 ================
 
