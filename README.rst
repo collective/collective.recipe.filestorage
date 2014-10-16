@@ -38,8 +38,9 @@ allow-implicit-cross-references
     Allow references across mounted databases. This is generally a bad idea.
     Defaults to ``False``.
 location
-    The location of the ``Data.fs`` file, relative to the buildout root directory.
-    Defaults to ``var/filestorage/%(fs_part_name)s/Data.fs``
+    The location of the data file for this filestorage, relative to the buildout
+    root.  May also be specified as an absolute path.
+    Defaults to ``var/filestorage/%(fs_part_name)s/%(fs_part_name)s.fs``
 zodb-name
     The name of the ZODB.  Defaults to ``%(fs_part_name)s``.
 zodb-cache-size
