@@ -31,7 +31,7 @@ class Recipe(object):
                         raise UserError, '[collective.recipe.filestorage] "%s" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.' % name
                     self.zeo_part = part_name
                     zeo_address = part.get('zeo-address', 8100)
-                
+
         # figure out which Zopes we're going to inject filestorage configuration into
         self.zope_parts = options.get('zopes', '').split()
         if len(self.zope_parts) == 0:
@@ -42,7 +42,7 @@ class Recipe(object):
                 elif part['recipe'] == 'plone.recipe.zope2instance':
                     if zeo_address is None or zeo_address == part.get('zeo-address', 8100):
                         self.zope_parts.append(part_name)
-                
+
         # figure out c.r.backup recipe
         self.backup_part = options.get('backup', None)
         if self.backup_part is not None:
@@ -52,7 +52,7 @@ class Recipe(object):
         # make sure this part is before any associated zeo/zope parts in the
         # buildout parts list
         self._validate_part_order()
-        
+
         # inject the extra sections into the correct zope-conf-additional or
         # zeo-conf-additional variables.
         self.subparts = options.get('parts', '').split()
@@ -65,7 +65,7 @@ class Recipe(object):
                 self._inject_backup_additional(self.backup_part, subpart)
 
     def install(self):
-        
+
         for subpart in self.subparts:
             # create the directory for this filestorage
             location = self._subpart_option(subpart, 'location', default=os.path.join('var', 'filestorage', '%(fs_part_name)s', '%(fs_part_name)s.fs'))
@@ -73,7 +73,7 @@ class Recipe(object):
             fs_dir = os.path.dirname(location)
             if not os.path.exists(fs_dir):
                 os.makedirs(fs_dir)
-            
+
             # create blobstorage dirs
             blob_storage = os.path.join('var', 'blobstorage-%(fs_part_name)s')
             if self._subpart_option(subpart, 'blob-storage', default=''):
@@ -82,7 +82,7 @@ class Recipe(object):
                     blob_storage = os.path.join(self.buildout['buildout']['directory'], blob_storage)
                 if not os.path.exists(blob_storage):
                     os.makedirs(blob_storage)
-            
+
                 if self.zeo_part:
                     zeo_blob_storage = self._subpart_option(subpart, 'zeo-blob-storage', default=blob_storage)
                     if not zeo_blob_storage.startswith(os.path.sep):
@@ -96,7 +96,7 @@ class Recipe(object):
     def update(self):
         """Updater"""
         pass
-        
+
     def _validate_part_order(self):
         """ Make sure this part is before any associated zeo/zope parts in the
             buildout parts list.
@@ -117,13 +117,13 @@ class Recipe(object):
                 target_parts.remove(part_name)
         if len(target_parts) > 0:
             raise UserError, '[collective.recipe.filestorage] The "%s" part expected but failed to find the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts))
-        
+
     def _inject_zope_conf(self, zope_part, subpart):
         zope_options = self.buildout[zope_part]
-        
+
         location = self._subpart_option(subpart, 'location', default=os.path.join('var', 'filestorage', '%(fs_part_name)s', '%(fs_part_name)s.fs'))
         location = os.path.join(self.buildout['buildout']['directory'], location)
-        
+
         storage_template = file_storage_template
         blob_storage = os.path.join('var', 'blobstorage-%(fs_part_name)s')
         blob_enabled = False
@@ -133,13 +133,17 @@ class Recipe(object):
             if not blob_storage.startswith(os.path.sep):
                 blob_storage = os.path.join(self.buildout['buildout']['directory'], blob_storage)
             storage_template = self._blob_storage_template(zope_part)
-        storage_snippet = storage_template % dict(
-            fs_name = '',
-            fs_path = location,
-            blob_storage = blob_storage,
-            )
-        
-        if zope_options.get('zeo-client', 'false').lower() in ('yes', 'true', 'on', '1'):
+        custom_template = self._subpart_option(subpart, 'zope-storage-template', default='', inherit=zope_part)
+
+        if zope_options.get('zeo-client', 'false').lower() not in ('yes', 'true', 'on', '1'):
+            if custom_template:
+                storage_template = custom_template
+            storage_snippet = storage_template % dict(
+                fs_name = '',
+                fs_path = location,
+                blob_storage = blob_storage,
+                )
+        else:
             zeo_address = self._subpart_option(subpart, 'zeo-address', default='8100', inherit=(zope_part, self.zeo_part))
             zeo_client_cache_size = self._subpart_option(subpart, 'zeo-client-cache-size', default='30MB', inherit=zope_part)
             zeo_client_client = self._subpart_option(subpart, 'zeo-client-client', default='', inherit=zope_part)
@@ -148,7 +152,7 @@ class Recipe(object):
             zeo_storage = self._subpart_option(subpart, 'zeo-storage', default='%(fs_part_name)s')
             zeo_client_name = self._subpart_option(subpart, 'zeo-client-name', default='%(fs_part_name)s_zeostorage')
             zeo_client_var = self._subpart_option(subpart, 'zeo-client-var', default=os.path.join(zope_options['location'], 'var'))
-            
+
             zeo_storage_template = zeo_file_storage_template
             zeo_blob_storage = self._subpart_option(subpart, 'zeo-blob-storage', default=blob_storage)
             if not zeo_blob_storage.startswith(os.path.sep):
@@ -156,7 +160,9 @@ class Recipe(object):
             zeo_shared_blob_dir = self._subpart_option(subpart, 'zeo-shared-blob-dir', default='on')
             if blob_enabled:
                 zeo_storage_template = zeo_blob_storage_template
-            
+            if custom_template:
+                zeo_storage_template = custom_template
+
             storage_snippet = zeo_storage_template % dict(
                 zeo_address = zeo_address,
                 zeo_client_cache_size = zeo_client_cache_size,
@@ -167,7 +173,7 @@ class Recipe(object):
                 zeo_blob_storage = zeo_blob_storage,
                 zeo_shared_blob_dir = zeo_shared_blob_dir,
                 )
-        
+
         zodb_cache_size = self._subpart_option(subpart, 'zodb-cache-size', default='5000', inherit=zope_part)
         allow_implicit_cross_references = self._subpart_option(subpart, 'allow-implicit-cross-references', default='false')
         zodb_name = self._subpart_option(subpart, 'zodb-name', default='%(fs_part_name)s')
@@ -183,17 +189,17 @@ class Recipe(object):
             zodb_cache_size = zodb_cache_size,
             storage_snippet = storage_snippet.strip()
             )
-            
+
         zope_conf_additional = zope_options.get('zope-conf-additional', '')
         zope_options['zope-conf-additional'] = zope_conf_additional + zodb_stanza
-    
+
     def _inject_zeo_conf(self, zeo_part, subpart):
         zeo_options = self.buildout[zeo_part]
-        
+
         location = self._subpart_option(subpart, 'location', default=os.path.join('var', 'filestorage', '%(fs_part_name)s', '%(fs_part_name)s.fs'))
         location = os.path.join(self.buildout['buildout']['directory'], location)
         zeo_storage = self._subpart_option(subpart, 'zeo-storage', default='%(fs_part_name)s')
-        
+
         storage_template = file_storage_template
         blob_storage = os.path.join('var', 'blobstorage-%(fs_part_name)s')
         if self._subpart_option(subpart, 'blob-storage', default=''):
@@ -201,7 +207,7 @@ class Recipe(object):
             if not blob_storage.startswith(os.path.sep):
                 blob_storage = os.path.join(self.buildout['buildout']['directory'], blob_storage)
             storage_template = self._blob_storage_template(zeo_part)
-        
+
         storage_snippet = storage_template % dict(
             fs_name=zeo_storage,
             fs_path=location,
@@ -210,7 +216,7 @@ class Recipe(object):
 
         zeo_conf_additional = zeo_options.get('zeo-conf-additional', '')
         zeo_options['zeo-conf-additional'] = zeo_conf_additional + storage_snippet
-    
+
     def _inject_backup_additional(self, backup_part, subpart):
         backup_options = self.buildout[backup_part]
 
@@ -236,14 +242,14 @@ class Recipe(object):
 
     def _subpart_option(self, subpart, option, default=None, inherit=()):
         """ Retrieve an option for a filestorage subpart, perhaps falling back to other specified parts.
-            Also substitutes the name of the subpart. 
+            Also substitutes the name of the subpart.
         """
-        
+
         parts_to_check = ['filestorage_' + subpart, self.name]
         if type(inherit) == type(''):
             inherit = (inherit,)
         parts_to_check.extend(inherit)
-        
+
         val = default
         for part in parts_to_check:
             if not self.buildout.has_key(part):
@@ -251,18 +257,16 @@ class Recipe(object):
             if self.buildout[part].has_key(option):
                 val = self.buildout[part][option]
                 break
-        
-        return val % dict(
-            fs_part_name = subpart
-            )
-    
+
+        return val.replace('%(fs_part_name)s', subpart)
+
     def _blob_storage_template(self, part):
         if self.buildout[part].has_key('zope2-location'):
             # non-eggified Zope; assume ZODB 3.8.x
             return blob_storage_zodb_3_8_template
         else:
             return blob_storage_zodb_3_9_template
-    
+
 # Storage snippets for zope.conf template
 file_storage_template="""
     <filestorage %(fs_name)s>
