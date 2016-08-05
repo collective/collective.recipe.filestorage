@@ -491,7 +491,8 @@ Backup integration
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
+    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -538,7 +539,8 @@ Backup with blob storage and custom filestorage location::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
+    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -592,7 +594,8 @@ No backup integration::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
+    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
