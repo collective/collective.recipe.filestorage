@@ -513,17 +513,23 @@ Backup integration
       'blobdir': '',
       'datafs': '/sample-buildout/var/filestorage/foo/foo.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups_foo',
-      'storage': 'foo'},
+      'storage': 'foo',
+      'zip_location': '/sample-buildout/var/zipbackups_foo'},
      {'backup_location': '/sample-buildout/var/backups_bar',
       'blobdir': '',
       'datafs': '/sample-buildout/var/filestorage/bar/bar.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups_bar',
-      'storage': 'bar'},
+      'storage': 'bar',
+      'zip_location': '/sample-buildout/var/zipbackups_bar'},
      {'backup_location': '/sample-buildout/var/backups',
-      'blobdir': '',
+      'blob_backup_location': '/sample-buildout/var/blobstoragebackups',
+      'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots',
+      'blob_zip_location': '/sample-buildout/var/blobstoragezips',
+      'blobdir': 'var/blobstorage',
       'datafs': '/sample-buildout/var/filestorage/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups',
-      'storage': '1'}
+      'storage': '1',
+      'zip_location': '/sample-buildout/var/zipbackups'}
 
 Backup with blob storage and custom filestorage location::
 
@@ -561,24 +567,32 @@ Backup with blob storage and custom filestorage location::
     ...     open('bin/backup').read(),
     ...     flags=re.M).group(1)
     {'backup_location': '/sample-buildout/var/backups_foo',
-      'blob_backup_location': '',
-      'blob_snapshot_location': '',
+      'blob_backup_location': '/sample-buildout/var/blobstoragebackups_foo',
+      'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots_foo',
+      'blob_zip_location': '/sample-buildout/var/blobstoragezips_foo',
       'blobdir': '/sample-buildout/var/blobstorage-foo',
       'datafs': '/sample-buildout/var/filestorage/foo/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups_foo',
-      'storage': 'foo'},
+      'storage': 'foo',
+      'zip_location': '/sample-buildout/var/zipbackups_foo'},
      {'backup_location': '/sample-buildout/var/backups_bar',
-      'blob_backup_location': '',
-      'blob_snapshot_location': '',
+      'blob_backup_location': '/sample-buildout/var/blobstoragebackups_bar',
+      'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots_bar',
+      'blob_zip_location': '/sample-buildout/var/blobstoragezips_bar',
       'blobdir': '/sample-buildout/var/blobstorage-bar',
       'datafs': '/sample-buildout/var/filestorage/bar/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups_bar',
-      'storage': 'bar'},
+      'storage': 'bar',
+      'zip_location': '/sample-buildout/var/zipbackups_bar'},
      {'backup_location': '/sample-buildout/var/backups',
-      'blobdir': '',
+      'blob_backup_location': '/sample-buildout/var/blobstoragebackups',
+      'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots',
+      'blob_zip_location': '/sample-buildout/var/blobstoragezips',
+      'blobdir': 'var/blobstorage',
       'datafs': '/sample-buildout/var/filestorage/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups',
-      'storage': '1'}
+      'storage': '1',
+      'zip_location': '/sample-buildout/var/zipbackups'}
 
 No backup integration::
 
@@ -752,7 +766,7 @@ Specifying a nonexistent ZEO should result in an error::
     >>> print system(join('bin', 'buildout') + ' -q')
     While:
     ...
-    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistant zeo part "foobar".
+    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistent zeo part "foobar".
 
 Specifying a nonexistent backup part should result in an error::
     >>> write('buildout.cfg',
@@ -781,7 +795,7 @@ Specifying a nonexistent backup part should result in an error::
     >>> print system(join('bin', 'buildout') + ' -q')
     While:
     ...
-    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistant backup part "foobar".
+    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistent backup part "foobar".
 
 So should specifying a nonexistent Zope part::
 

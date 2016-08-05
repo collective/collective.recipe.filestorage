@@ -13,8 +13,8 @@ import zc.buildout.testing
 from zope.testing import doctest, renormalizing
 
 optionflags =  (doctest.ELLIPSIS |
-                doctest.NORMALIZE_WHITESPACE |
-                doctest.REPORT_ONLY_FIRST_FAILURE)
+                doctest.REPORT_NDIFF |
+                doctest.NORMALIZE_WHITESPACE)
                 
 current_dir = os.path.abspath(os.path.dirname(__file__))
 recipe_location = current_dir

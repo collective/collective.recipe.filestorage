@@ -47,7 +47,7 @@ class Recipe(object):
         self.backup_part = options.get('backup', None)
         if self.backup_part is not None:
             if not self.backup_part in self.buildout:
-                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistant backup part "%s".' % (name, self.backup_part)
+                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistent backup part "%s".' % (name, self.backup_part)
 
         # make sure this part is before any associated zeo/zope parts in the
         # buildout parts list
