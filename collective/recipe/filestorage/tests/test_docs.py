@@ -31,14 +31,15 @@ def setUp(test):
     zc.buildout.testing.install_develop('collective.recipe.filestorage', test)
     
     # Add a base.cfg we can extend
+    version = os.environ.get('PLONE_VERSION', '4.3')
     zc.buildout.testing.write('base.cfg', '''
 [buildout]
-extends = http://dist.plone.org/release/4.3/versions.cfg
+extends = http://dist.plone.org/release/{version}/versions.cfg
 index = http://pypi.python.org/simple
 [versions]
 # pin to a version that doesn't pull in an eggified Zope
 # plone.recipe.zope2instance = 3.6
-''')
+'''.format(version=version))
 
 
 def test_suite():

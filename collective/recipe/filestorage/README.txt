@@ -748,4 +748,3 @@ Reporting bugs or asking questions
 
 There is a shared bugtracker and help desk on Launchpad:
 https://bugs.launchpad.net/collective.buildout/
->>>>>>> 8eb35c3
