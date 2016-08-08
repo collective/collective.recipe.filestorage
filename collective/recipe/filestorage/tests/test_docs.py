@@ -9,11 +9,13 @@ import re
 import unittest
 import zc.buildout.tests
 import zc.buildout.testing
+import subprocess
 
 from zope.testing import doctest, renormalizing
 
 optionflags =  (doctest.ELLIPSIS |
-                doctest.REPORT_NDIFF |
+#                doctest.REPORT_NDIFF |
+                doctest.REPORT_ONLY_FIRST_FAILURE |
                 doctest.NORMALIZE_WHITESPACE)
                 
 current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -41,6 +43,14 @@ index = http://pypi.python.org/simple
 # plone.recipe.zope2instance = 3.6
 '''.format(version=version))
 
+def run_buildout(*args):
+    (out,err) = subprocess.Popen([os.path.join('bin', 'buildout')]+list(args),
+                                 stdout=subprocess.PIPE,stderr=subprocess.STDOUT
+    ).communicate()
+    if out is None:
+        return ''
+    else:
+        return out
 
 def test_suite():
     suite = unittest.TestSuite((
