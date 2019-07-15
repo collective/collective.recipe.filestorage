@@ -17,8 +17,20 @@ Simply run this script in a directory containing a buildout.cfg.
 The script accepts buildout command-line options, so you can
 use the -c option to specify an alternate configuration file.
 """
+from __future__ import print_function
+import os
+import shutil
+import sys
+import tempfile
+import six.moves.urllib.request
+import six.moves.urllib.parse
+import six.moves.urllib.error
+import six.moves.urllib.request
+import six.moves.urllib.error
+import six.moves.urllib.parse
 
-import os, shutil, sys, tempfile, urllib, urllib2, subprocess
+import subprocess
+from six.moves import map
 from optparse import OptionParser
 
 if sys.platform == 'win32':
@@ -50,7 +62,7 @@ if not has_broken_dash_S and 'site' in sys.modules:
     # We will restart with python -S.
     args = sys.argv[:]
     args[0:0] = [sys.executable, '-S']
-    args = map(quote, args)
+    args = list(map(quote, args))
     os.execv(sys.executable, args)
 # Now we are running with -S.  We'll get the clean sys.path, import site
 # because distutils will do it later, and then reset the path and clean
@@ -78,8 +90,8 @@ def normalize_to_url(option, opt_str, value, parser):
     if value:
         if '://' not in value:  # It doesn't smell like a URL.
             value = 'file://%s' % (
-                urllib.pathname2url(
-                    os.path.abspath(os.path.expanduser(value))),)
+                six.moves.urllib.request.pathname2url(
+                     os.path.abspath(os.path.expanduser(value))),)
         if opt_str == '--download-base' and not value.endswith('/'):
             # Download base needs a trailing slash to make the world happy.
             value += '/'
@@ -156,10 +168,10 @@ try:
     if not hasattr(pkg_resources, '_distribute'):
         raise ImportError
 except ImportError:
-    ez_code = urllib2.urlopen(
-        options.setup_source).read().replace('\r\n', '\n')
+    ez_code = six.moves.urllib.request.urlopen(
+         options.setup_source).read().replace('\r\n', '\n')
     ez = {}
-    exec ez_code in ez
+    exec(ez_code,ez)
     setup_args = dict(to_dir=eggs_dir, download_delay=0)
     if options.download_base:
         setup_args['download_base'] = options.download_base

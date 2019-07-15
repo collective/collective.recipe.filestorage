@@ -17,18 +17,18 @@ class Recipe(object):
         zeo_address = None
         self.zeo_part = options.get('zeo', None)
         if self.zeo_part is not None:
-            if self.buildout.has_key(self.zeo_part):
+            if self.zeo_part in self.buildout:
                 zeo_address = self.buildout[self.zeo_part].get('zeo-address', 8100)
             else:
-                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistant zeo part "%s".' % (name, self.zeo_part)
+                raise UserError('[collective.recipe.filestorage] "%s" part specifies nonexistant zeo part "%s".' % (name, self.zeo_part))
         else:
             for part_name in active_parts:
                 part = self.buildout[part_name]
-                if not part.has_key('recipe'):
+                if 'recipe' not in part:
                     continue
                 elif part['recipe'] in ('plone.recipe.zope2zeoserver', 'plone.recipe.zeoserver'):
                     if self.zeo_part is not None:
-                        raise UserError, '[collective.recipe.filestorage] "%s" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.' % name
+                        raise UserError('[collective.recipe.filestorage] "%s" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.' % name)
                     self.zeo_part = part_name
                     zeo_address = part.get('zeo-address', 8100)
                 
@@ -37,7 +37,7 @@ class Recipe(object):
         if len(self.zope_parts) == 0:
             for part_name in active_parts:
                 part = self.buildout[part_name]
-                if not part.has_key('recipe'):
+                if 'recipe' not in part:
                     continue
                 elif part['recipe'] == 'plone.recipe.zope2instance':
                     if zeo_address is None or zeo_address == part.get('zeo-address', 8100):
@@ -47,7 +47,7 @@ class Recipe(object):
         self.backup_part = options.get('backup', None)
         if self.backup_part is not None:
             if not self.backup_part in self.buildout:
-                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistant backup part "%s".' % (name, self.backup_part)
+                raise UserError('[collective.recipe.filestorage] "%s" part specifies nonexistant backup part "%s".' % (name, self.backup_part))
 
         # make sure this part is before any associated zeo/zope parts in the
         # buildout parts list
@@ -113,10 +113,10 @@ class Recipe(object):
                 continue
             if part_name in target_parts:
                 if len(injector_parts) > 0:
-                    raise UserError, '[collective.recipe.filestorage] The "%s" part must be listed before the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts))
+                    raise UserError('[collective.recipe.filestorage] The "%s" part must be listed before the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts)))
                 target_parts.remove(part_name)
         if len(target_parts) > 0:
-            raise UserError, '[collective.recipe.filestorage] The "%s" part expected but failed to find the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts))
+            raise UserError('[collective.recipe.filestorage] The "%s" part expected but failed to find the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts)))
         
     def _inject_zope_conf(self, zope_part, subpart):
         zope_options = self.buildout[zope_part]
@@ -246,9 +246,9 @@ class Recipe(object):
         
         val = default
         for part in parts_to_check:
-            if not self.buildout.has_key(part):
+            if part not in self.buildout:
                 continue
-            if self.buildout[part].has_key(option):
+            if option in self.buildout[part]:
                 val = self.buildout[part][option]
                 break
         
@@ -257,7 +257,7 @@ class Recipe(object):
             )
     
     def _blob_storage_template(self, part):
-        if self.buildout[part].has_key('zope2-location'):
+        if 'zope2-location' in self.buildout[part]:
             # non-eggified Zope; assume ZODB 3.8.x
             return blob_storage_zodb_3_8_template
         else:
