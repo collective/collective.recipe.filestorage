@@ -147,7 +147,7 @@ class Recipe(object):
                 zeo_client_client = 'client %s' % zeo_client_client
             zeo_storage = self._subpart_option(subpart, 'zeo-storage', default='%(fs_part_name)s')
             zeo_client_name = self._subpart_option(subpart, 'zeo-client-name', default='%(fs_part_name)s_zeostorage')
-            zeo_client_var = self._subpart_option(subpart, 'zeo-client-var', default=os.path.join(zope_options['location'], 'var'))
+            zeo_client_var = self._subpart_option(subpart, 'zeo-client-var', default=os.path.join(zope_options['location'], 'var'), inherit=zope_part)
             
             zeo_storage_template = zeo_file_storage_template
             zeo_blob_storage = self._subpart_option(subpart, 'zeo-blob-storage', default=blob_storage)
