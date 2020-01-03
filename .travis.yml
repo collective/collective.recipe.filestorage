@@ -1,7 +1,9 @@
+dist: bionic
 language: python
 python:
   - 2.7
 install:
-  - python bootstrap.py
+  - virtualenv -p `which python` .
+  - bin/pip install -r requirements.txt
   - bin/buildout -t 3
 script: bin/test
