@@ -20,13 +20,13 @@ class Recipe(object):
             if self.buildout.has_key(self.zeo_part):
                 zeo_address = self.buildout[self.zeo_part].get('zeo-address', 8100)
             else:
-                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistant zeo part "%s".' % (name, self.zeo_part)
+                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistent zeo part "%s".' % (name, self.zeo_part)
         else:
             for part_name in active_parts:
                 part = self.buildout[part_name]
                 if not part.has_key('recipe'):
                     continue
-                elif part['recipe'] in ('plone.recipe.zope2zeoserver', 'plone.recipe.zeoserver'):
+                elif 'plone.recipe.zope2zeoserver' in part['recipe'] or 'plone.recipe.zeoserver' in part['recipe']:
                     if self.zeo_part is not None:
                         raise UserError, '[collective.recipe.filestorage] "%s" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.' % name
                     self.zeo_part = part_name
@@ -39,7 +39,7 @@ class Recipe(object):
                 part = self.buildout[part_name]
                 if not part.has_key('recipe'):
                     continue
-                elif part['recipe'] == 'plone.recipe.zope2instance':
+                elif 'plone.recipe.zope2instance' in part['recipe']:
                     if zeo_address is None or zeo_address == part.get('zeo-address', 8100):
                         self.zope_parts.append(part_name)
                 
@@ -47,12 +47,12 @@ class Recipe(object):
         self.backup_part = options.get('backup', None)
         if self.backup_part is not None:
             if not self.backup_part in self.buildout:
-                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistant backup part "%s".' % (name, self.backup_part)
+                raise UserError, '[collective.recipe.filestorage] "%s" part specifies nonexistent backup part "%s".' % (name, self.backup_part)
 
         # make sure this part is before any associated zeo/zope parts in the
         # buildout parts list
         self._validate_part_order()
-        
+
         # inject the extra sections into the correct zope-conf-additional or
         # zeo-conf-additional variables.
         self.subparts = options.get('parts', '').split()
@@ -127,6 +127,22 @@ class Recipe(object):
         storage_template = file_storage_template
         blob_storage = os.path.join('var', 'blobstorage-%(fs_part_name)s')
         blob_enabled = False
+        replicate_from = ''
+        replicate_to = ''
+        keep_alive_delay = ''
+        if self.zeo_part and self.zeo_part in self.buildout:
+            replicate_from = self.buildout[self.zeo_part].get('replicate-from', '')
+            replicate_from = self._subpart_option(subpart, 'replicate-from', default=replicate_from)
+            if replicate_from:
+                replicate_from = 'replicate-from ' + replicate_from
+            replicate_to = self.buildout[self.zeo_part].get('replicate-to', '')
+            replicate_to = self._subpart_option(subpart, 'replicate-to', default=replicate_to)
+            if replicate_to:
+                replicate_to = 'replicate-to ' + replicate_to
+            keep_alive_delay = self.buildout[self.zeo_part].get('keep-alive-delay', '')
+            keep_alive_delay = self._subpart_option(subpart, 'keep-alive-delay', default=keep_alive_delay)
+            if keep_alive_delay:
+                keep_alive_delay = 'keep-alive-delay ' + keep_alive_delay
         if self._subpart_option(subpart, 'blob-storage', default=''):
             blob_enabled = True
             blob_storage = self._subpart_option(subpart, 'blob-storage', default=blob_storage)
@@ -137,10 +153,25 @@ class Recipe(object):
             fs_name = '',
             fs_path = location,
             blob_storage = blob_storage,
+            replicate_from = replicate_from,
+            replicate_to = replicate_to,
+            keep_alive_delay = keep_alive_delay,
             )
         
         if zope_options.get('zeo-client', 'false').lower() in ('yes', 'true', 'on', '1'):
             zeo_address = self._subpart_option(subpart, 'zeo-address', default='8100', inherit=(zope_part, self.zeo_part))
+            zeo_addresses = zeo_address.split(' ')
+            zeo_address_list = ''
+            for address in zeo_addresses:
+                if not address:
+                    continue
+                zeo_address_list += zeo_address_list_template % dict(
+                                    zeo_address = address)
+
+            read_only = self._subpart_option(subpart, 'read-only', default='false', inherit=zope_part)
+            zeo_client_read_only_fallback = self._subpart_option(subpart, 'zeo-client-read-only-fallback', default='', inherit=zope_part)
+            if zeo_client_read_only_fallback:
+                zeo_client_read_only_fallback = 'read-only-fallback %s' % zeo_client_read_only_fallback
             zeo_client_cache_size = self._subpart_option(subpart, 'zeo-client-cache-size', default='30MB', inherit=zope_part)
             zeo_client_client = self._subpart_option(subpart, 'zeo-client-client', default='', inherit=zope_part)
             if zeo_client_client:
@@ -158,7 +189,7 @@ class Recipe(object):
                 zeo_storage_template = zeo_blob_storage_template
             
             storage_snippet = zeo_storage_template % dict(
-                zeo_address = zeo_address,
+                zeo_address_list = zeo_address_list,
                 zeo_client_cache_size = zeo_client_cache_size,
                 zeo_client_client = zeo_client_client,
                 zeo_storage = zeo_storage,
@@ -166,6 +197,8 @@ class Recipe(object):
                 zeo_client_var=zeo_client_var,
                 zeo_blob_storage = zeo_blob_storage,
                 zeo_shared_blob_dir = zeo_shared_blob_dir,
+                read_only = read_only,
+                zeo_client_read_only_fallback = zeo_client_read_only_fallback,
                 )
         
         zodb_cache_size = self._subpart_option(subpart, 'zodb-cache-size', default='5000', inherit=zope_part)
@@ -196,6 +229,18 @@ class Recipe(object):
         
         storage_template = file_storage_template
         blob_storage = os.path.join('var', 'blobstorage-%(fs_part_name)s')
+        replicate_from = zeo_options.get('replicate-from', '')
+        replicate_from = self._subpart_option(subpart, 'replicate-from', default=replicate_from)
+        if replicate_from:
+            replicate_from = 'replicate-from ' + replicate_from
+        replicate_to = zeo_options.get('replicate-to', '')
+        replicate_to = self._subpart_option(subpart, 'replicate-to', default=replicate_to)
+        if replicate_to:
+            replicate_to = 'replicate-to ' + replicate_to
+        keep_alive_delay = zeo_options.get('keep-alive-delay', '')
+        keep_alive_delay = self._subpart_option(subpart, 'keep-alive-delay', default=keep_alive_delay)
+        if keep_alive_delay:
+            keep_alive_delay = 'keep-alive-delay ' + keep_alive_delay
         if self._subpart_option(subpart, 'blob-storage', default=''):
             blob_storage = self._subpart_option(subpart, 'blob-storage', default=blob_storage)
             if not blob_storage.startswith(os.path.sep):
@@ -206,6 +251,9 @@ class Recipe(object):
             fs_name=zeo_storage,
             fs_path=location,
             blob_storage=blob_storage,
+            replicate_from = replicate_from,
+            replicate_to = replicate_to,
+            keep_alive_delay = keep_alive_delay,
             )
 
         zeo_conf_additional = zeo_options.get('zeo-conf-additional', '')
@@ -257,11 +305,18 @@ class Recipe(object):
             )
     
     def _blob_storage_template(self, part):
-        if self.buildout[part].has_key('zope2-location'):
-            # non-eggified Zope; assume ZODB 3.8.x
-            return blob_storage_zodb_3_8_template
+        if self.zeo_part and 'recipe' in self.buildout[self.zeo_part] and '[zrs]' in self.buildout[self.zeo_part]['recipe']:
+            if self.buildout[part].has_key('zope2-location'):
+                # non-eggified Zope; assume ZODB 3.8.x
+                return zrs_blob_storage_zodb_3_8_template
+            else:
+                return zrs_blob_storage_zodb_3_9_template
         else:
-            return blob_storage_zodb_3_9_template
+            if self.buildout[part].has_key('zope2-location'):
+                # non-eggified Zope; assume ZODB 3.8.x
+                return blob_storage_zodb_3_8_template
+            else:
+                return blob_storage_zodb_3_9_template
     
 # Storage snippets for zope.conf template
 file_storage_template="""
@@ -286,9 +341,41 @@ blob_storage_zodb_3_9_template="""
     </filestorage>
 """
 
+zrs_blob_storage_zodb_3_8_template="""
+    <zrs %(fs_name)s>
+        %(replicate_from)s
+        %(replicate_to)s
+        %(keep_alive_delay)s
+        <blobstorage %(fs_name)s>
+          blob-dir %(blob_storage)s
+          <filestorage %(fs_name)s>
+            path %(fs_path)s
+          </filestorage>
+        </blobstorage>
+    </zrs>
+"""
+
+zrs_blob_storage_zodb_3_9_template="""
+    <zrs %(fs_name)s>
+        %(replicate_from)s
+        %(replicate_to)s
+        %(keep_alive_delay)s
+        <filestorage %(fs_name)s>
+          path %(fs_path)s
+          blob-dir %(blob_storage)s
+        </filestorage>
+    </zrs>
+"""
+
+zeo_address_list_template="""
+      server %(zeo_address)s
+"""
+
 zeo_file_storage_template="""
     <zeoclient>
-      server %(zeo_address)s
+      read-only %(read_only)s
+      %(zeo_client_read_only_fallback)s  
+      %(zeo_address_list)s
       storage %(zeo_storage)s
       name %(zeo_client_name)s
       var %(zeo_client_var)s
@@ -299,9 +386,11 @@ zeo_file_storage_template="""
 
 zeo_blob_storage_template="""
     <zeoclient>
+      read-only %(read_only)s
+      %(zeo_client_read_only_fallback)s  
       blob-dir %(zeo_blob_storage)s
       shared-blob-dir %(zeo_shared_blob_dir)s
-      server %(zeo_address)s
+      %(zeo_address_list)s
       storage %(zeo_storage)s
       name %(zeo_client_name)s
       var %(zeo_client_var)s
