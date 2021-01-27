@@ -33,14 +33,13 @@ def setUp(test):
     zc.buildout.testing.install_develop('collective.recipe.filestorage', test)
     
     # Add a base.cfg we can extend
-    version = os.environ.get('PLONE_VERSION', '4.3')
+    version = os.environ.get('PLONE_VERSION', '5.1')
     zc.buildout.testing.write('base.cfg', '''
 [buildout]
-extends = http://dist.plone.org/release/{version}/versions.cfg
-index = http://pypi.python.org/simple
-[versions]
-# pin to a version that doesn't pull in an eggified Zope
-# plone.recipe.zope2instance = 3.6
+extends = http://dist.plone.org/release/{version}-latest/versions.cfg
+find-links =
+    https://dist.plone.org/release/{version}-latest/
+    https://dist.plone.org/thirdparty/
 '''.format(version=version))
 
 def run_buildout(*args):
