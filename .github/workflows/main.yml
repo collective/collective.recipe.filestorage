@@ -32,10 +32,10 @@ jobs:
           # sudo apt-get install py-pip  
           pip install \
             virtualenv wheel
-      - uses: nanasess/setup-chromedriver@master
-        # with:
-        #   # Optional: do not specify to match Chrome's version
-        #   chromedriver-version: '77.0.3865.40'            
+      # - uses: nanasess/setup-chromedriver@master
+      #   # with:
+      #   #   # Optional: do not specify to match Chrome's version
+      #   #   chromedriver-version: '77.0.3865.40'            
       - name: Cache multiple paths
         uses: actions/cache@v2
         with:

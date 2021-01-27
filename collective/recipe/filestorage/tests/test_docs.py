@@ -10,8 +10,9 @@ import unittest
 import zc.buildout.tests
 import zc.buildout.testing
 import subprocess
+import doctest
 
-from zope.testing import doctest, renormalizing
+from zope.testing import renormalizing
 
 optionflags =  (doctest.ELLIPSIS |
 #                doctest.REPORT_NDIFF |
@@ -37,6 +38,7 @@ def setUp(test):
     zc.buildout.testing.write('base.cfg', '''
 [buildout]
 extends = http://dist.plone.org/release/{version}-latest/versions.cfg
+index = http://pypi.python.org/simple
 find-links =
     https://dist.plone.org/release/{version}-latest/
     https://dist.plone.org/thirdparty/
