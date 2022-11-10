@@ -35,6 +35,7 @@ jobs:
           # sudo apt-get install py-pip  
           pip install \
             virtualenv wheel
+          pip instal -r requirements.txt
       # - uses: nanasess/setup-chromedriver@master
       #   # with:
       #   #   # Optional: do not specify to match Chrome's version
@@ -56,10 +57,6 @@ jobs:
             echo "[buildout]" > $HOME/.buildout/default.cfg
             echo "download-cache = $HOME/buildout-cache/downloads" >> $HOME/.buildout/default.cfg
             echo "eggs-directory = $HOME/buildout-cache/eggs" >> $HOME/.buildout/default.cfg
-      - name: bootstrap buildout
-        run: |
-          ./bootstrap.sh test-${{ matrix.plone }}.x.cfg
-          ls -al
       - name: buildout
         run: |
           bin/buildout -t 10 -Nc test-${{ matrix.plone }}.x.cfg
