@@ -48,7 +48,7 @@ class Recipe(object):
         # figure out c.r.backup recipe
         self.backup_part = options.get('backup', None)
         if self.backup_part is not None:
-            if not self.backup_part in self.buildout:
+            if self.backup_part not in self.buildout:
                 raise UserError('[collective.recipe.filestorage] "%s" part specifies '
                                 'nonexistant backup part "%s".' % (name, self.backup_part))
 
@@ -120,14 +120,12 @@ class Recipe(object):
                 if len(injector_parts) > 0:
                     raise UserError(
                         '[collective.recipe.filestorage] The "%s" part must be listed '
-                        'before the following parts in ${buildout:parts}: %s' % (
-                        self.name, ', '.join(target_parts)))
+                        'before the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts)))
                 target_parts.remove(part_name)
         if len(target_parts) > 0:
             raise UserError(
                 '[collective.recipe.filestorage] The "%s" part expected but failed '
-                'to find the following parts in ${buildout:parts}: %s' % (
-                self.name, ', '.join(target_parts)))
+                'to find the following parts in ${buildout:parts}: %s' % (self.name, ', '.join(target_parts)))
 
     def _inject_zope_conf(self, zope_part, subpart):
         zope_options = self.buildout[zope_part]
@@ -198,7 +196,7 @@ class Recipe(object):
             zodb_mountpoint=zodb_mountpoint,
             zodb_container_class=zodb_container_class,
             zodb_cache_size=zodb_cache_size,
-            storage_snippet=storage_snippet.strip()
+            storage_snippet=storage_snippet.strip(),
         )
 
         zope_conf_additional = zope_options.get('zope-conf-additional', '')
@@ -256,12 +254,12 @@ class Recipe(object):
         backup_options['additional_filestorages'] = '\n'.join([backup_additionals, additional])
 
     def _subpart_option(self, subpart, option, default=None, inherit=()):
-        """ Retrieve an option for a filestorage subpart, perhaps falling back to other specified parts.
-            Also substitutes the name of the subpart. 
         """
-
+        Retrieve an option for a filestorage subpart, perhaps falling back to other specified parts.
+        Also substitutes the name of the subpart.
+        """
         parts_to_check = ['filestorage_' + subpart, self.name]
-        if type(inherit) == type(''):
+        if type(inherit) == type(''): # noqa
             inherit = (inherit,)
         parts_to_check.extend(inherit)
 
@@ -274,7 +272,7 @@ class Recipe(object):
                 break
 
         return val % dict(
-            fs_part_name=subpart
+            fs_part_name=subpart,
         )
 
     def _blob_storage_template(self, part):
