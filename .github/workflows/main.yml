@@ -18,6 +18,14 @@ jobs:
           - '5.0'
           - '5.1'
           - '5.2'
+        include:
+          - python: '3.9'
+            plone: '5.2'
+          - python: '3.10'
+            plone: '6.0'
+        exclude:
+          - python: '2.7'
+            plone: '6.0'
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
