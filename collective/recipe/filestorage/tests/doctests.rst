@@ -16,14 +16,14 @@ Let's create and run a minimal buildout that adds an extra filestorage::
    ... user = me:pass
    ... # dead chicken .. if we don't specify no eggs, 'instance' is assumed
    ... # https://dev.plone.org/ticket/14023#comment:1
-   ... eggs = 
+   ... eggs =
    ...
    ... [filestorage]
    ... recipe = collective.recipe.filestorage
    ... parts =
    ...     my-fs
    ... ''' % globals())
-   >>> print(system(join('bin', 'buildout') + ' -q'))
+   >>> system(join('bin', 'buildout') + ' -q')
 
 Our ``zope.conf`` should get the extra filestorage stanza automatically injected into it::
 
