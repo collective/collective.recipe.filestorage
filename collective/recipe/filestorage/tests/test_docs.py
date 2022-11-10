@@ -13,9 +13,7 @@ import zc.buildout.testing
 
 from zope.testing import renormalizing
 
-optionflags = (doctest.ELLIPSIS |
-               doctest.NORMALIZE_WHITESPACE |
-               doctest.REPORT_ONLY_FIRST_FAILURE)
+optionflags = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.REPORT_ONLY_FIRST_FAILURE)
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
 recipe_location = current_dir
@@ -58,7 +56,7 @@ def test_suite():
                 (re.compile('^.*?module references __path__.*?$', re.M), ''),
                 zc.buildout.testing.normalize_path,
             ]),
-            globs=globals()
+            globs=globals(),
         ),
     ))
     return suite
