@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
+
 join = os.path.join
 
+
 class ZEOInstanceBuilder:
-    
+
     def create(self, location, *args):
         os.mkdir(location)
         for sub in ('etc', 'bin'):
@@ -13,4 +16,3 @@ class ZEOInstanceBuilder:
             f = open(join(bin_dir, script), 'w')
             f.write(content)
             f.close()
-

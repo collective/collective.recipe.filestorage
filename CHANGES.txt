@@ -1,6 +1,8 @@
 0.7 (unreleased)
 ================
 
+ - Fix test for python3 version
+   [aormazabal]
  - Add support for c.r.backup
    [mamico]
  - Document virtual mount points. [jean]

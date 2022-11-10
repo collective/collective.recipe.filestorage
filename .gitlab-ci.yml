@@ -1,0 +1,35 @@
+# This file is a template, and might need editing before it works on your project.
+# Official language image. Look for the different tagged releases at:
+# https://hub.docker.com/r/library/plone/tags/
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache"
+
+# Pip's cache doesn't store the python packages
+# https://pip.pypa.io/en/stable/reference/pip_install/#caching
+#
+# If you want to also cache the installed packages, you have to install
+# them in a virtualenv and cache it as well.
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+    - downloads/
+    - eggs/
+    - builds/
+
+# Set execution order: first run jobs on 'test' stage on parallel
+# then run jobs on 'report' stage
+stages:
+  - test
+
+before_script:
+  - pip install -U tox
+
+test:
+  image: python3.6
+  stage: test
+  script:
+    - tox -e py{36}

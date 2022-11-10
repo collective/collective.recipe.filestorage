@@ -5,32 +5,33 @@ This module contains the tool of collective.recipe.filestorage
 import os
 from setuptools import setup, find_packages
 
+
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '0.7dev'
+
+version = '0.7dev0'
 
 long_description = (
-    'Detailed Documentation\n'
-    '**********************\n'
-    + '\n' +
-    read('README.rst')
-    + '\n' +
-    'Change history\n'
-    '**************\n'
-    + '\n' + 
-    read('CHANGES.txt')
-    + '\n' +
-    'Contributors\n' 
-    '************\n'
-    + '\n' +
-    read('CONTRIBUTORS.txt')
-    )
+        'Detailed Documentation\n'
+        '**********************\n'
+        + '\n' +
+        read('README.rst')
+        + '\n' +
+        'Change history\n'
+        '**************\n'
+        + '\n' +
+        read('CHANGES.txt')
+        + '\n' +
+        'Contributors\n'
+        '************\n'
+        + '\n' +
+        read('CONTRIBUTORS.txt')
+)
 entry_point = 'collective.recipe.filestorage:Recipe'
 entry_points = {"zc.buildout": ["default = %s" % entry_point]}
 
-tests_require=['zope.testing', 'manuel']
-
+tests_require = ['zope.testing', 'manuel']
 
 setup(name='collective.recipe.filestorage',
       version=version,
@@ -38,13 +39,14 @@ setup(name='collective.recipe.filestorage',
       long_description=long_description,
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
-        'Framework :: Buildout',
-        'Framework :: Zope2',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'License :: OSI Approved :: Zope Public License',
-        ],
+          'Framework :: Buildout',
+          'Framework :: Zope5',
+          'Intended Audience :: Developers',
+          'Topic :: Software Development :: Build Tools',
+          'Topic :: Software Development :: Libraries :: Python Modules',
+          'Programming Language :: Python :: 3.6',
+          'License :: OSI Approved :: Zope Public License',
+      ],
       keywords='buildout zope zeo zodb mountpoint filestorage',
       author='David Glick',
       author_email='david.glick@plone.org',
@@ -61,6 +63,6 @@ setup(name='collective.recipe.filestorage',
                         ],
       tests_require=tests_require,
       extras_require=dict(test=tests_require),
-      test_suite = 'collective.recipe.filestorage.tests.test_docs.test_suite',
+      test_suite='collective.recipe.filestorage.tests.test_docs.test_suite',
       entry_points=entry_points,
       )

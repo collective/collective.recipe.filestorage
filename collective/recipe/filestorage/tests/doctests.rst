@@ -16,19 +16,20 @@ Let's create and run a minimal buildout that adds an extra filestorage::
    ... user = me:pass
    ... # dead chicken .. if we don't specify no eggs, 'instance' is assumed
    ... # https://dev.plone.org/ticket/14023#comment:1
-   ... eggs = 
+   ... eggs =
    ...
    ... [filestorage]
    ... recipe = collective.recipe.filestorage
    ... parts =
    ...     my-fs
    ... ''' % globals())
-   >>> print run_buildout('-q')
+   >>> system(join('bin', 'buildout') + ' -q')
 
 Our ``zope.conf`` should get the extra filestorage stanza automatically injected into it::
 
    >>> instance = os.path.join(sample_buildout, 'parts', 'instance')
-   >>> print open(os.path.join(instance, 'etc', 'zope.conf')).read()
+   >>> with open(os.path.join(instance, 'etc', 'zope.conf'), 'r') as f:
+   ...     print(f.read())
    %define INSTANCEHOME...instance
    ...
    <BLANKLINE>
@@ -50,9 +51,30 @@ The recipe will also create a directory for the new filestorage::
 Let's make sure that the conf files will be regenerated whenever we make a change to a filestorage part,
 even if the direct configuration for the zope/zeo parts hasn't changed::
 
-    >>> open('buildout.cfg', 'a').write("    my-fs-2\n")
-    >>> print run_buildout('-q')
-    >>> 'my-fs-2' in open('parts/instance/etc/zope.conf').read()
+    >>> write('buildout.cfg',
+    ... '''
+    ... [buildout]
+    ... extends = base.cfg
+    ... parts =
+    ...     filestorage
+    ...     instance
+    ...
+    ... [instance]
+    ... recipe = plone.recipe.zope2instance
+    ... user = me:pass
+    ... # dead chicken .. if we don't specify no eggs, 'instance' is assumed
+    ... # https://dev.plone.org/ticket/14023#comment:1
+    ... eggs =
+    ...
+    ... [filestorage]
+    ... recipe = collective.recipe.filestorage
+    ... parts =
+    ...     my-fs
+    ...     my-fs-2
+    ... ''' % globals())
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    >>> with open('parts/instance/etc/zope.conf', 'r') as f:
+    ...     'my-fs-2' in f.read()
     True
 
 Let's make sure that the filestorage directory is not clobbered even if the filestorage part is removed
@@ -68,9 +90,9 @@ from the buildout::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     >>> 'my-fs' in os.listdir(os.path.join(sample_buildout, 'var', 'filestorage'))
     True
 
@@ -87,7 +109,7 @@ We can override the defaults for a number of settings::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -96,13 +118,13 @@ We can override the defaults for a number of settings::
     ... zodb-name = %(fs_part_name)s_db
     ... zodb-cache-size = 1000
     ... zodb-mountpoint = /%(fs_part_name)s_mountpoint
-    ... zodb-container-class = Products.ATContentTypes.content.folder.ATFolder
     ... parts =
     ...     my-fs
     ... ''')
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     >>> instance = os.path.join(sample_buildout, 'parts', 'instance')
-    >>> print open(os.path.join(instance, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(instance, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME...instance
     ...
     <BLANKLINE>
@@ -114,7 +136,6 @@ We can override the defaults for a number of settings::
           blob-dir .../var/blobstorage-my-fs
         </filestorage>
         mount-point /my-fs_mountpoint
-        container-class Products.ATContentTypes.content.folder.ATFolder
     </zodb_db>
     <BLANKLINE>
 
@@ -132,7 +153,7 @@ the ``filestorage_`` prefix, like so::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -142,9 +163,10 @@ the ``filestorage_`` prefix, like so::
     ... [filestorage_my-fs]
     ... zodb-cache-size = 1000
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     >>> instance = os.path.join(sample_buildout, 'parts', 'instance')
-    >>> print open(os.path.join(instance, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(instance, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME...instance
     ...
     <BLANKLINE>
@@ -187,10 +209,12 @@ but you can tell it to only add it to certain parts::
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
-    >>> 'my-fs' in open('parts/instance1/etc/zope.conf').read()
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    >>> with open('parts/instance1/etc/zope.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     True
-    >>> 'my-fs' in open('parts/instance2/etc/zope.conf').read()
+    >>> with open('parts/instance2/etc/zope.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     False
 
 Example Usage with ZEO
@@ -215,12 +239,12 @@ Here is a minimal buildout including a ZEO server and two ZODB clients::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [secondary]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ... zeo-client = 1
     ...
     ... [filestorage]
@@ -228,12 +252,23 @@ Here is a minimal buildout including a ZEO server and two ZODB clients::
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    Created directory .../parts/zeoserver
+    Created directory .../parts/zeoserver/etc
+    Created directory .../parts/zeoserver/var
+    Created directory .../parts/zeoserver/log
+    Created directory .../parts/zeoserver/bin
+    Wrote file .../parts/zeoserver/etc/zeo.conf
+    Wrote file .../parts/zeoserver/bin/zeoctl
+    Changed mode for .../parts/zeoserver/bin/zeoctl to ...
+    Wrote file .../parts/zeoserver/bin/runzeo
+    Changed mode for .../parts/zeoserver/bin/runzeo to ...
 
 This should result in the appropriate additions to ``zeo.conf`` and both ``zope.conf``'s::
 
     >>> zeoserver = os.path.join(sample_buildout, 'parts', 'zeoserver')
-    >>> print open(os.path.join(zeoserver, 'etc', 'zeo.conf')).read()
+    >>> with open(os.path.join(zeoserver, 'etc', 'zeo.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCE /sample-buildout/parts/zeoserver
     ...
     <BLANKLINE>
@@ -243,7 +278,8 @@ This should result in the appropriate additions to ``zeo.conf`` and both ``zope.
     <BLANKLINE>
 
     >>> primary = os.path.join(sample_buildout, 'parts', 'primary')
-    >>> print open(os.path.join(primary, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(primary, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME /sample-buildout/parts/primary
     ...
     <BLANKLINE>
@@ -251,20 +287,20 @@ This should result in the appropriate additions to ``zeo.conf`` and both ``zope.
      cache-size 5000
      allow-implicit-cross-references false
      <zeoclient>
-       read-only false
        server 8100
        storage my-fs
        name my-fs_zeostorage
        var /sample-buildout/parts/primary/var
        cache-size 30MB
     <BLANKLINE>
-     </zeoclient> 
+     </zeoclient>
      mount-point /my-fs
     </zodb_db>
     <BLANKLINE>
 
     >>> secondary = os.path.join(sample_buildout, 'parts', 'secondary')
-    >>> print open(os.path.join(secondary, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(secondary, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME /sample-buildout/parts/secondary
     ...
     <BLANKLINE>
@@ -272,14 +308,13 @@ This should result in the appropriate additions to ``zeo.conf`` and both ``zope.
      cache-size 5000
      allow-implicit-cross-references false
      <zeoclient>
-       read-only false
        server 8100
        storage my-fs
        name my-fs_zeostorage
        var /sample-buildout/parts/secondary/var
        cache-size 30MB
     <BLANKLINE>
-     </zeoclient> 
+     </zeoclient>
      mount-point /my-fs
     </zodb_db>
     <BLANKLINE>
@@ -303,13 +338,13 @@ As above, we can override a number of the default parameters::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [secondary]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -325,7 +360,7 @@ As above, we can override a number of the default parameters::
     ... parts =
     ...     my-fs
     ... ''')
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     Created directory .../parts/zeoserver
     Created directory .../parts/zeoserver/etc
     Created directory .../parts/zeoserver/var
@@ -338,7 +373,8 @@ As above, we can override a number of the default parameters::
     Changed mode for .../parts/zeoserver/bin/runzeo to ...
     <BLANKLINE>
     >>> zeoserver = os.path.join(sample_buildout, 'parts', 'zeoserver')
-    >>> print open(os.path.join(zeoserver, 'etc', 'zeo.conf')).read()
+    >>> with open(os.path.join(zeoserver, 'etc', 'zeo.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCE /sample-buildout/parts/zeoserver
     ...
     <BLANKLINE>
@@ -348,7 +384,8 @@ As above, we can override a number of the default parameters::
         </filestorage>
     <BLANKLINE>
     >>> primary = os.path.join(sample_buildout, 'parts', 'primary')
-    >>> print open(os.path.join(primary, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(primary, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME /sample-buildout/parts/primary
     ...
     <BLANKLINE>
@@ -356,7 +393,6 @@ As above, we can override a number of the default parameters::
      cache-size 1000
      allow-implicit-cross-references false
      <zeoclient>
-       read-only false
        blob-dir /sample-buildout/var/blobstorage-my-fs
        shared-blob-dir on
        server 8101
@@ -365,12 +401,13 @@ As above, we can override a number of the default parameters::
        var /sample-buildout/parts/primary/var
        cache-size 50MB
     <BLANKLINE>
-     </zeoclient> 
+     </zeoclient>
      mount-point /my-fs_mountpoint
     </zodb_db>
     <BLANKLINE>
     >>> secondary = os.path.join(sample_buildout, 'parts', 'secondary')
-    >>> print open(os.path.join(secondary, 'etc', 'zope.conf')).read()
+    >>> with open(os.path.join(secondary, 'etc', 'zope.conf'), 'r') as f:
+    ...     print(f.read())
     %define INSTANCEHOME /sample-buildout/parts/secondary
     ...
     <BLANKLINE>
@@ -378,7 +415,6 @@ As above, we can override a number of the default parameters::
      cache-size 1000
      allow-implicit-cross-references false
      <zeoclient>
-       read-only false
        blob-dir /sample-buildout/var/blobstorage-my-fs
        shared-blob-dir on
        server 8101
@@ -387,7 +423,7 @@ As above, we can override a number of the default parameters::
        var /sample-buildout/parts/secondary/var
        cache-size 50MB
     <BLANKLINE>
-     </zeoclient> 
+     </zeoclient>
      mount-point /my-fs_mountpoint
     </zodb_db>
     <BLANKLINE>
@@ -423,21 +459,21 @@ will only be added to the Zopes using that ZEO, by default::
     ... user = me:pass
     ... zeo-client = 1
     ... zeo-address = 8101
-    ... eggs = 
+    ... eggs =
     ...
     ... [secondary]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
     ... zeo-address = 8101
-    ... eggs = 
+    ... eggs =
     ...
     ... [other-zope]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
     ... zeo-address = 8100
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -445,7 +481,7 @@ will only be added to the Zopes using that ZEO, by default::
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     Created directory .../parts/zeoserver2
     Created directory .../parts/zeoserver2/etc
     Created directory .../parts/zeoserver2/var
@@ -467,17 +503,23 @@ will only be added to the Zopes using that ZEO, by default::
     Wrote file .../parts/zeoserver1/bin/runzeo
     Changed mode for .../parts/zeoserver1/bin/runzeo to ...
     <BLANKLINE>
-    >>> 'my-fs' in open('parts/zeoserver2/etc/zeo.conf').read()
+    >>> with open('parts/zeoserver2/etc/zeo.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     True
-    >>> 'my-fs' in open('parts/zeoserver1/etc/zeo.conf').read()
+    >>> with open('parts/zeoserver1/etc/zeo.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     False
-    >>> 'my-fs' in open('parts/primary/etc/zope.conf').read()
+    >>> with open('parts/primary/etc/zope.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     True
-    >>> 'my-fs' in open('parts/other-zope/etc/zope.conf').read()
+    >>> with open('parts/other-zope/etc/zope.conf', 'r') as f:
+    ...     'my-fs' in f.read()
     False
 
 Backup integration
 ==================
+
+Backup integration::
 
     >>> write('buildout.cfg',
     ... '''
@@ -492,7 +534,6 @@ Backup integration
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... eggs =
-    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -504,11 +545,12 @@ Backup integration
     ...     bar
     ... backup = backup
     ... ''')
-    >>> print run_buildout('-q')
-    >>> print re.search(
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    >>> with open('bin/backup', 'r') as f:
+    ...     print(re.search(
     ...     r"storages\s*=\s*\[([^\]]+)\]",
-    ...     open('bin/backup').read(),
-    ...     flags=re.M).group(1)
+    ...     f.read(),
+    ...     flags=re.M).group(1))
     {'backup_location': '/sample-buildout/var/backups_foo',
       'blobdir': '',
       'datafs': '/sample-buildout/var/filestorage/foo/foo.fs',
@@ -525,7 +567,7 @@ Backup integration
       'blob_backup_location': '/sample-buildout/var/blobstoragebackups',
       'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots',
       'blob_zip_location': '/sample-buildout/var/blobstoragezips',
-      'blobdir': 'var/blobstorage',
+      'blobdir': '/sample-buildout/var/blobstorage',
       'datafs': '/sample-buildout/var/filestorage/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups',
       'storage': '1',
@@ -546,7 +588,6 @@ Backup with blob storage and custom filestorage location::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... eggs =
-    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -561,11 +602,12 @@ Backup with blob storage and custom filestorage location::
     ...     bar
     ... backup = backup
     ... ''')
-    >>> print run_buildout('-q')
-    >>> print re.search(
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    >>> with open('bin/backup', 'r') as f:
+    ...     print(re.search(
     ...     r"storages\s*=\s*\[([^\]]+)\]",
-    ...     open('bin/backup').read(),
-    ...     flags=re.M).group(1)
+    ...     f.read(),
+    ...     flags=re.M).group(1))
     {'backup_location': '/sample-buildout/var/backups_foo',
       'blob_backup_location': '/sample-buildout/var/blobstoragebackups_foo',
       'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots_foo',
@@ -588,7 +630,7 @@ Backup with blob storage and custom filestorage location::
       'blob_backup_location': '/sample-buildout/var/blobstoragebackups',
       'blob_snapshot_location': '/sample-buildout/var/blobstoragesnapshots',
       'blob_zip_location': '/sample-buildout/var/blobstoragezips',
-      'blobdir': 'var/blobstorage',
+      'blobdir': '/sample-buildout/var/blobstorage',
       'datafs': '/sample-buildout/var/filestorage/Data.fs',
       'snapshot_location': '/sample-buildout/var/snapshotbackups',
       'storage': '1',
@@ -609,7 +651,6 @@ No backup integration::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... eggs =
-    ... blob-storage = var/blobstorage
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -623,20 +664,24 @@ No backup integration::
     ...     foo
     ...     bar
     ... ''')
-    >>> print run_buildout('-q')
-    >>> 'lorem' in open('bin/backup').read()
+    >>> print(system(join('bin', 'buildout') + ' -q'))
+    >>> with open('bin/backup', 'r') as f:
+    ...     'lorem' in f.read()
     True
-    >>> 'ipsum' in open('bin/backup').read()
+    >>> with open('bin/backup', 'r') as f:
+    ...     'ipsum' in f.read()
     True
-    >>> 'foo' in open('bin/backup').read()
+    >>> with open('bin/backup', 'r') as f:
+    ...     'foo' in f.read()
     False
-    >>> 'bar' in open('bin/backup').read()
+    >>> with open('bin/backup', 'r') as f:
+    ...     'bar' in f.read()
     False
 
 
 Error conditions
 ================
-    
+
 Important note: You must place all parts using the
 collective.recipe.filestorage recipe before the part for the instances and
 zeoservers that you are adding the filestorage to.  Otherwise you'll get an
@@ -653,14 +698,14 @@ error::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
     Error: [collective.recipe.filestorage] The "filestorage" part must be listed before the following parts in ${buildout:parts}: instance
@@ -678,7 +723,7 @@ error::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -689,7 +734,7 @@ error::
     ...     my-fs
     ... backup = backup
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
     Error: [collective.recipe.filestorage] The "filestorage" part must be listed before the following parts in ${buildout:parts}: instance, backup
@@ -719,20 +764,20 @@ error if the desired ZEO to associate with is not explicitly specified::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [secondary]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
     Error: [collective.recipe.filestorage] "filestorage" part found multiple zeoserver parts; please specify which one to use with the "zeo" option.
@@ -755,7 +800,7 @@ Specifying a nonexistent ZEO should result in an error::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -763,12 +808,13 @@ Specifying a nonexistent ZEO should result in an error::
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
-    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistent zeo part "foobar".
+    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistant zeo part "foobar".
 
 Specifying a nonexistent backup part should result in an error::
+
     >>> write('buildout.cfg',
     ... '''
     ... [buildout]
@@ -781,7 +827,7 @@ Specifying a nonexistent backup part should result in an error::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [backup]
     ... recipe = collective.recipe.backup>=2.7
@@ -792,10 +838,10 @@ Specifying a nonexistent backup part should result in an error::
     ...     my-fs
     ... backup = foobar
     ... ''')
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
-    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistent backup part "foobar".
+    Error: [collective.recipe.filestorage] "filestorage" part specifies nonexistant backup part "foobar".
 
 So should specifying a nonexistent Zope part::
 
@@ -815,7 +861,7 @@ So should specifying a nonexistent Zope part::
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
     ... zeo-client = 1
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -823,7 +869,7 @@ So should specifying a nonexistent Zope part::
     ... parts =
     ...     my-fs
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     While:
     ...
     Error: [collective.recipe.filestorage] The "filestorage" part expected but failed to find the following parts in ${buildout:parts}: foobar
@@ -843,7 +889,7 @@ included in the buildout::
     ... [instance]
     ... recipe = plone.recipe.zope2instance
     ... user = me:pass
-    ... eggs = 
+    ... eggs =
     ...
     ... [filestorage]
     ... recipe = collective.recipe.filestorage
@@ -854,43 +900,6 @@ included in the buildout::
     ... recipe = plone.recipe.distros
     ... urls =
     ... ''' % globals())
-    >>> print run_buildout('-q')
+    >>> print(system(join('bin', 'buildout') + ' -q'))
     >>> 'foobar' in os.listdir(os.path.join(sample_buildout, 'parts'))
     False
-
-Make sure that instance parts are found correctly in buildouts using ``extends``
-and the ``+=`` or ``-=`` options::
-
-    >>> write('buildout.cfg',
-    ... '''
-    ... [buildout]
-    ... extends = base.cfg
-    ... parts =
-    ...     filestorage
-    ...     instance
-    ...
-    ... [instance]
-    ... recipe = plone.recipe.zope2instance
-    ... user = me:pass
-    ... eggs = 
-    ...
-    ... [filestorage]
-    ... recipe = collective.recipe.filestorage
-    ... parts =
-    ...     extendstest
-    ... ''' % globals())
-    >>> write('prod.cfg',
-    ... '''
-    ... [buildout]
-    ... extends = buildout.cfg
-    ... parts +=
-    ...     foobar
-    ...
-    ... [foobar]
-    ... recipe = plone.recipe.distros
-    ... urls =
-    ... ''' % globals())
-    >>> print run_buildout('-q','-c','prod.cfg')
-    >>> 'extendstest' in open(os.path.join(instance, 'etc', 'zope.conf')).read()
-    True
-
