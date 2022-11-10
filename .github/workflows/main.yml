@@ -38,7 +38,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox
           sudo apt-get install libxml2-dev libxslt-dev
+      - name: Lint
+        run: tox -e ${{ matrix.config[1] }}-lint
       - name: Test
         run: tox -e ${{ matrix.config[1] }}
-
 
